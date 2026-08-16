@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2週間集中プログラム</title>
+<style>
+  :root{
+    --bg: #1a1410;
+    --bg-card: #251d17;
+    --orange: #ff7a1a;
+    --orange-deep: #d9560a;
+    --orange-pale: #ffb877;
+    --text: #f5ead9;
+    --text-dim: #a89684;
+    --line: #3a2f24;
+    --green: #4caf7d;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ---- Header ---- */
+  header{
+    padding:28px 20px 20px;
+    position:relative;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--orange);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    line-height:1.3;
+  }
+  .subtitle{
+    color:var(--text-dim);
+    font-size:13px;
+    margin-top:6px;
+  }
+
+  /* ---- Progress strip: 14 day track ---- */
+  .track-wrap{
+    padding:4px 20px 22px;
+  }
+  .track{
+    display:grid;
+    grid-template-columns:repeat(14, 1fr);
+    gap:4px;
+    position:relative;
+  }
+  .day-dot{
+    aspect-ratio:1;
+    border-radius:8px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:700;
+    color:var(--text-dim);
+    position:relative;
+    transition:transform .15s ease;
+  }
+  .day-dot.done{
+    background:linear-gradient(160deg, var(--orange), var(--orange-deep));
+    color:#1a1410;
+    border-color:transparent;
+  }
+  .day-dot.today{
+    border-color:var(--orange);
+    color:var(--orange-pale);
+    box-shadow:0 0 0 3px rgba(255,122,26,0.15);
+  }
+  .day-dot.missed{
+    border-color:var(--line);
+    color:var(--text-dim);
+    opacity:0.55;
+  }
+  .day-dot.missed::after{
+    content:"";
+    position:absolute;
+    bottom:3px; right:3px;
+    width:5px; height:5px;
+    border-radius:50%;
+    background:var(--text-dim);
+  }
+  .week-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:8px;
+    padding:0 2px;
+  }
+
+  /* ---- Today card ---- */
+  main{
+    flex:1;
+    padding:8px 20px 100px;
+  }
+  .today-card{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:24px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .today-card::before{
+    content:"";
+    position:absolute;
+    top:-40%; right:-20%;
+    width:220px; height:220px;
+    background:radial-gradient(circle, rgba(255,122,26,0.18), transparent 70%);
+    pointer-events:none;
+  }
+  .day-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,122,26,0.14);
+    color:var(--orange-pale);
+    font-size:12px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:100px;
+    margin-bottom:14px;
+  }
+  .focus-title{
+    font-size:22px;
+    font-weight:800;
+    line-height:1.35;
+    margin-bottom:4px;
+  }
+  .focus-sub{
+    color:var(--text-dim);
+    font-size:13px;
+    margin-bottom:20px;
+  }
+
+  .exercise-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .ex-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 14px;
+    background:rgba(0,0,0,0.18);
+    border-radius:12px;
+    border:1px solid var(--line);
+  }
+  .ex-num{
+    width:26px; height:26px;
+    border-radius:8px;
+    background:var(--line);
+    color:var(--text-dim);
+    font-size:12px;
+    font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .ex-name{ font-size:14px; font-weight:600; flex:1; }
+  .ex-meta{ font-size:12px; color:var(--orange-pale); font-weight:700; white-space:nowrap;}
+  .ex-note{ font-size:11px; color:var(--text-dim); display:block; margin-top:2px; }
+
+  /* duration selector */
+  .duration-select{
+    margin-bottom:18px;
+  }
+  .duration-label{
+    font-size:12px; color:var(--text-dim); margin-bottom:8px; font-weight:600;
+  }
+  .duration-btns{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  .dur-btn{
+    padding:12px 0;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--text);
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .dur-btn.active{
+    background:var(--orange);
+    border-color:var(--orange);
+    color:#1a1410;
+  }
+
+  .start-btn{
+    width:100%;
+    padding:17px 0;
+    border-radius:14px;
+    border:none;
+    background:linear-gradient(135deg, var(--orange), var(--orange-deep));
+    color:#1a1410;
+    font-size:16px;
+    font-weight:800;
+    letter-spacing:0.02em;
+    cursor:pointer;
+  }
+  .start-btn:disabled{ opacity:0.5; }
+  .done-badge{
+    width:100%;
+    padding:17px 0;
+    border-radius:14px;
+    background:rgba(76,175,125,0.15);
+    border:1px solid var(--green);
+    color:var(--green);
+    text-align:center;
+    font-weight:800;
+    font-size:15px;
+  }
+
+  /* ---- Stats row ---- */
+  .stats{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-top:18px;
+  }
+  .stat-box{
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 10px;
+    text-align:center;
+  }
+  .stat-num{ font-size:22px; font-weight:800; color:var(--orange); }
+  .stat-label{ font-size:10.5px; color:var(--text-dim); margin-top:2px; }
+
+  /* ---- Session overlay ---- */
+  .overlay{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:100;
+    display:none;
+    flex-direction:column;
+    max-width:480px;
+    margin:0 auto;
+  }
+  .overlay.active{ display:flex; }
+  .sess-header{
+    padding:20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .close-btn{
+    width:36px; height:36px;
+    border-radius:50%;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .sess-progress{ font-size:13px; color:var(--text-dim); font-weight:700; }
+
+  .sess-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:20px 32px;
+    text-align:center;
+  }
+  .sess-ring{
+    width:220px; height:220px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin-bottom:28px;
+  }
+  .sess-ring svg{ position:absolute; top:0; left:0; transform:rotate(-90deg);}
+  .sess-timer{ font-size:52px; font-weight:800; color:var(--orange-pale); font-variant-numeric:tabular-nums;}
+  .sess-name{ font-size:24px; font-weight:800; margin-bottom:8px; line-height:1.3;}
+  .sess-note{ font-size:14px; color:var(--text-dim); margin-bottom:6px; }
+  .sess-next{ font-size:12px; color:var(--text-dim); margin-top:20px; }
+  .sess-next b{ color:var(--orange-pale); }
+
+  .sess-controls{
+    display:flex;
+    gap:12px;
+    padding:20px;
+  }
+  .ctrl-btn{
+    flex:1;
+    padding:16px 0;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--bg-card);
+    color:var(--text);
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .ctrl-btn.primary{
+    background:var(--orange);
+    border-color:var(--orange);
+    color:#1a1410;
+    flex:2;
+  }
+
+  /* complete screen */
+  .complete-screen{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+    text-align:center;
+  }
+  .complete-icon{ font-size:56px; margin-bottom:16px; }
+  .complete-title{ font-size:24px; font-weight:800; margin-bottom:8px; }
+  .complete-sub{ font-size:14px; color:var(--text-dim); margin-bottom:32px; }
+
+  .loading{
+    display:flex; align-items:center; justify-content:center;
+    padding:60px 0; color:var(--text-dim); font-size:13px;
+  }
+
+  /* ---- Onboarding ---- */
+  .onboard{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:32px 22px 24px;
+  }
+  .onboard-eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--orange);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .onboard-title{
+    font-size:26px;
+    font-weight:800;
+    line-height:1.4;
+    margin-bottom:6px;
+  }
+  .onboard-sub{
+    font-size:13.5px;
+    color:var(--text-dim);
+    line-height:1.7;
+    margin-bottom:26px;
+  }
+  .onboard-points{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .onboard-point{
+    display:flex;
+    gap:14px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+  }
+  .onboard-icon{
+    font-size:22px;
+    flex-shrink:0;
+    width:34px;
+    text-align:center;
+  }
+  .onboard-point-title{
+    font-size:14.5px;
+    font-weight:700;
+    margin-bottom:3px;
+  }
+  .onboard-point-desc{
+    font-size:12.5px;
+    color:var(--text-dim);
+    line-height:1.6;
+  }
+  .onboard-footer{
+    margin-top:auto;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .onboard-check{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    color:var(--text-dim);
+    cursor:pointer;
+    user-select:none;
+  }
+  .onboard-check input{
+    width:18px; height:18px;
+    accent-color:var(--orange);
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading" id="loadingState">読み込み中...</div>
+</div>
+
+<script>
+// ====== PROGRAM DATA ======
+// Day type A: 脚・お尻・バランス
+// Day type B: 体幹・下背部
+const PROGRAM = {
+  A_week1: [
+    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", target:"12回 × 1セット"},
+    {name:"片脚バランス（左右）", note:"壁や椅子に手を添えてOK", type:"time", seconds:20, sets:1, side:true},
+    {name:"カーフレイズ", note:"かかと上げ下げ", type:"reps", target:"15回 × 1セット"},
+  ],
+  A_week2: [
+    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", target:"15回 × 2セット"},
+    {name:"片脚バランス（左右）", note:"慣れたら手を離してみる", type:"time", seconds:30, sets:2, side:true},
+    {name:"カーフレイズ", note:"かかと上げ下げ、ゆっくり", type:"reps", target:"20回 × 2セット"},
+    {name:"サイドレッグレイズ（左右）", note:"お尻の横の筋肉", type:"time", seconds:20, sets:1, side:true},
+  ],
+  B_week1: [
+    {name:"スタンディング・ニーレイズタッチ", note:"片膝を上げて逆手でタッチ、体幹を意識", type:"time", seconds:20, sets:1, side:true},
+    {name:"ウォールプランク", note:"壁に手をつき斜めに体幹保持、腰は反らさない", type:"time", seconds:20, sets:1},
+    {name:"スタンディング・バードドッグ", note:"片手と逆脚を伸ばしてキープ", type:"time", seconds:20, sets:1, side:true},
+  ],
+  B_week2: [
+    {name:"スタンディング・ニーレイズタッチ", note:"片膝を上げて逆手でタッチ、ゆっくり", type:"time", seconds:30, sets:2, side:true},
+    {name:"ウォールプランク", note:"壁との角度を少し立てて負荷UP", type:"time", seconds:30, sets:2},
+    {name:"スタンディング・バードドッグ", note:"片手と逆脚を伸ばしてキープ、ぐらつかないように", type:"time", seconds:25, sets:2, side:true},
+    {name:"チェアスクワットホールド", note:"椅子に軽く手を添えて浅めに保持", type:"time", seconds:20, sets:1},
+  ],
+};
+
+const WARMUP = {
+  A: [
+    {name:"足首まわし（左右）", note:"その場で足首をゆっくり回す", type:"time", seconds:15, sets:1, side:true, phase:"warmup"},
+    {name:"その場足踏み", note:"軽く膝を上げながら", type:"time", seconds:20, sets:1, phase:"warmup"},
+  ],
+  B: [
+    {name:"腕回し", note:"肩から大きく前後に回す", type:"time", seconds:15, sets:1, phase:"warmup"},
+    {name:"上体ひねり", note:"腰から左右にゆっくりひねる", type:"time", seconds:20, sets:1, phase:"warmup"},
+  ],
+};
+
+const COOLDOWN = {
+  A: [
+    {name:"ふくらはぎストレッチ（左右）", note:"壁に手をつき片脚を後ろに引いて伸ばす", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+    {name:"お尻・股関節ストレッチ（左右）", note:"椅子に座り片足首を反対の膝に乗せて前傾", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+  ],
+  B: [
+    {name:"体側伸ばし（左右）", note:"片手を上げて横に倒す", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+    {name:"肩甲骨ストレッチ", note:"腕を胸の前でクロスして反対の手で引き寄せる", type:"time", seconds:20, sets:1, phase:"cooldown"},
+  ],
+};
+
+
+const DAY_TYPES = ["A","B","A","B","A","B","A","B","A","B","A","B","A","B"]; // Day1-14
+
+function getDayMenu(dayIndex){ // 0-indexed
+  const week = dayIndex < 7 ? 1 : 2;
+  const type = DAY_TYPES[dayIndex];
+  return PROGRAM[`${type}_week${week}`];
+}
+function getDayLabel(dayIndex){
+  const type = DAY_TYPES[dayIndex];
+  return type === "A" ? "脚・お尻・バランス" : "体幹・下背部";
+}
+
+// duration -> how many exercises / sets multiplier (simple: 5min=core only, 20min=all+extra rest)
+const DURATION_OPTIONS = [5,10,15,20];
+
+let state = {
+  startDate: null,      // ISO date string of Day1
+  completedDays: [],   // array of day numbers
+  selectedDuration: 10,
+  hideOnboarding: false,
+  sessionActive: false,
+  sessionQueue: [],
+  sessionIndex: 0,
+  timerInterval: null,
+};
+
+function todayDateStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function daysBetween(dateStrA, dateStrB){
+  const a = new Date(dateStrA + 'T00:00:00');
+  const b = new Date(dateStrB + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+
+// currentDay は常にカレンダー通り（サボっても待たれず、今日の分がそのまま出る）
+function computeCurrentDay(){
+  const elapsed = daysBetween(state.startDate, todayDateStr()); // 0 = Day1当日
+  const calendarDay = elapsed + 1;
+  return Math.max(1, Math.min(15, calendarDay)); // 15 = 期間終了（14日経過後）
+}
+
+function missedDaysCount(){
+  const calendarDay = Math.min(14, computeCurrentDay());
+  let missed = 0;
+  for(let d=1; d<calendarDay; d++){
+    if(!state.completedDays.includes(d)) missed++;
+  }
+  return missed;
+}
+
+function renderOnboarding(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="onboard">
+      <div class="onboard-eyebrow">はじめに</div>
+      <div class="onboard-title">2週間、体の土台を作ります</div>
+      <div class="onboard-sub">足腰・体幹の維持を目的にした、毎日短時間の集中プログラムです。職場でも自宅でも、立ったまま完結します。</div>
+
+      <div class="onboard-points">
+        <div class="onboard-point">
+          <div class="onboard-icon">🦵</div>
+          <div>
+            <div class="onboard-point-title">1日おきに脚・お尻／体幹を交互に</div>
+            <div class="onboard-point-desc">同じ筋群を連日使わないよう、A日（脚・お尻・バランス）とB日（体幹）を自動的に切り替えます。</div>
+          </div>
+        </div>
+        <div class="onboard-point">
+          <div class="onboard-icon">📅</div>
+          <div>
+            <div class="onboard-point-title">Dayは毎日、自動で進みます</div>
+            <div class="onboard-point-desc">開始した日がDay1。以降はカレンダー通りにDay2、Day3と進み、14日で1クールです。</div>
+          </div>
+        </div>
+        <div class="onboard-point">
+          <div class="onboard-icon">💪</div>
+          <div>
+            <div class="onboard-point-title">サボっても大丈夫</div>
+            <div class="onboard-point-desc">できなかった日があっても、それは過去のこと。今日の分だけやれば続いています。追いつく必要はありません。</div>
+          </div>
+        </div>
+        <div class="onboard-point">
+          <div class="onboard-icon">⏱️</div>
+          <div>
+            <div class="onboard-point-title">5〜20分から選べます</div>
+            <div class="onboard-point-desc">時間に応じてセット数が自動調整。前後にウォームアップ・クールダウンも付きます（5分選択時は本編のみ）。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="onboard-footer">
+        <label class="onboard-check">
+          <input type="checkbox" id="hideOnboardCheck">
+          次回からこの説明を表示しない
+        </label>
+        <button class="start-btn" onclick="closeOnboarding()">はじめる</button>
+      </div>
+    </div>
+  `;
+}
+
+function closeOnboarding(){
+  const checked = document.getElementById('hideOnboardCheck').checked;
+  state.hideOnboarding = checked;
+  saveState();
+  render();
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('progress');
+    if(res && res.value){
+      const saved = JSON.parse(res.value);
+      state.startDate = saved.startDate || null;
+      state.completedDays = saved.completedDays || [];
+      state.selectedDuration = saved.selectedDuration || 10;
+      state.hideOnboarding = saved.hideOnboarding || false;
+    }
+  }catch(e){ /* no saved state yet */ }
+  const isFirstLaunch = !state.startDate;
+  if(!state.startDate){
+    state.startDate = todayDateStr();
+    await saveState();
+  }
+  if(isFirstLaunch && !state.hideOnboarding){
+    renderOnboarding();
+  } else {
+    render();
+  }
+}
+
+async function saveState(){
+  try{
+    await window.storage.set('progress', JSON.stringify({
+      startDate: state.startDate,
+      completedDays: state.completedDays,
+      selectedDuration: state.selectedDuration,
+      hideOnboarding: state.hideOnboarding
+    }));
+  }catch(e){ console.error('save failed', e); }
+}
+
+function buildSessionQueue(dayIndex, duration){
+  const menu = getDayMenu(dayIndex);
+  const dayType = DAY_TYPES[dayIndex];
+
+  function expand(exList, forceSingleSet){
+    let out = [];
+    exList.forEach(ex=>{
+      let sets = forceSingleSet ? 1 : (ex.sets || 1);
+      if(!forceSingleSet){
+        if(duration >= 15) sets += 1;
+        if(duration === 5) sets = 1;
+      }
+      for(let s=0; s<sets; s++){
+        if(ex.side){
+          out.push({...ex, label:`${ex.name}（右）`, setNum:s+1, totalSets:sets});
+          out.push({...ex, label:`${ex.name}（左）`, setNum:s+1, totalSets:sets});
+        } else {
+          out.push({...ex, label:ex.name, setNum:s+1, totalSets:sets});
+        }
+      }
+    });
+    return out;
+  }
+
+  let items = [];
+  // 5分セッションはウォームアップ/クールダウンなしでメインのみ
+  if(duration > 5){
+    items = items.concat(expand(WARMUP[dayType], true));
+  }
+  items = items.concat(expand(menu, false));
+  if(duration > 5){
+    items = items.concat(expand(COOLDOWN[dayType], true));
+  }
+  return items;
+}
+
+// 応援・叱咤激励メッセージ
+const ENCOURAGE_START = [
+  "今日も一つ、積み上げよう。",
+  "焦らずいこう。今日の分だけ集中。",
+  "奥さんとの時間のための投資、今日も一回分。",
+  "続けてるだけで上位。今日もやろう。",
+  "サボり癖より、今日の一歩。",
+];
+const ENCOURAGE_MID = [
+  "いいペース。折り返し近い。",
+  "ここまで来た自分を信じていい。",
+  "きつくても、あと少しで終わる。",
+];
+const ENCOURAGE_COMPLETE = [
+  "今日も完了。地味だけどこれが効く。",
+  "よくやった。明日も同じように。",
+  "積み上げ、順調。体は嘘つかない。",
+  "今日の分、しっかり完了。",
+];
+const ENCOURAGE_BEHIND = [
+  "できなかった日は気にしなくていい。今日、やるかどうかだけ。",
+  "止まってた日があっても、今日やれば続いてる。",
+  "完璧じゃなくていい。今日だけ見よう。",
+  "空いた日は過去のこと。今日を積み上げよう。",
+  "誰でも波はある。今日、また一つ積もう。",
+];
+const ENCOURAGE_WAITING = [
+  "今日の分はもう終わり。休むのも仕事のうち。",
+  "明日また会おう。今日はしっかり休んで。",
+];
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function render(){
+  const app = document.getElementById('app');
+  state.currentDay = computeCurrentDay();
+  const dayIdx = state.currentDay - 1;
+  const isProgramDone = state.currentDay >= 15;
+
+  if(isProgramDone){
+    app.innerHTML = renderFinalScreen();
+    return;
+  }
+
+  const menu = getDayMenu(dayIdx);
+  const dayLabel = getDayLabel(dayIdx);
+  const weekNum = dayIdx < 7 ? 1 : 2;
+  const isDoneToday = state.completedDays.includes(state.currentDay);
+  const missed = missedDaysCount();
+
+  let message;
+  if(isDoneToday){
+    message = pick(ENCOURAGE_COMPLETE);
+  } else if(missed > 0){
+    message = pick(ENCOURAGE_BEHIND);
+  } else {
+    message = pick(ENCOURAGE_START);
+  }
+
+  app.innerHTML = `
+    <header style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div class="eyebrow">2週間集中プログラム · WEEK ${weekNum}</div>
+        <h1>Day ${state.currentDay} / 14</h1>
+        <div class="subtitle">${message}</div>
+        ${missed > 0 && !isDoneToday ? `<div class="subtitle" style="color:var(--orange-pale); margin-top:2px;">できなかった日が${missed}日あるけど、今日は今日の分だけでOK</div>` : ''}
+      </div>
+      <div class="close-btn" style="flex-shrink:0; margin-top:2px;" onclick="renderOnboarding()">？</div>
+    </header>
+
+    <div class="track-wrap">
+      <div class="track">
+        ${Array.from({length:14}).map((_,i)=>{
+          const dayNum = i+1;
+          const done = state.completedDays.includes(dayNum);
+          const isToday = dayNum === state.currentDay;
+          const isPastMissed = dayNum < state.currentDay && !done;
+          return `<div class="day-dot ${done?'done':''} ${isToday?'today':''} ${isPastMissed?'missed':''}">${done?'✓':dayNum}</div>`;
+        }).join('')}
+      </div>
+      <div class="week-label"><span>Week 1</span><span>Week 2</span></div>
+    </div>
+
+    <main>
+      <div class="today-card">
+        <div class="day-tag">${dayLabel === '脚・お尻・バランス' ? '🦵' : '🧘'} ${dayLabel}</div>
+        <div class="focus-title">${dayLabel}</div>
+        <div class="focus-sub">Week${weekNum} · ${menu.length}種目 · 前後にウォームアップ/クールダウン付き（5分選択時は本編のみ）</div>
+
+        <div class="exercise-list">
+          ${menu.map((ex,i)=>`
+            <div class="ex-row">
+              <div class="ex-num">${i+1}</div>
+              <div style="flex:1">
+                <div class="ex-name">${ex.name}${ex.side?'（左右）':''}</div>
+                <span class="ex-note">${ex.note}</span>
+              </div>
+              <div class="ex-meta">${ex.type==='time' ? ex.seconds+'秒×'+ex.sets : ex.target}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${!isDoneToday ? `
+        <div class="duration-select">
+          <div class="duration-label">セッション時間</div>
+          <div class="duration-btns">
+            ${DURATION_OPTIONS.map(d=>`
+              <button class="dur-btn ${state.selectedDuration===d?'active':''}" onclick="selectDuration(${d})">${d}分</button>
+            `).join('')}
+          </div>
+        </div>
+        <button class="start-btn" onclick="startSession()">今日のセッションを開始</button>
+        ` : `
+        <div class="done-badge">✓ Day ${state.currentDay} 完了しました</div>
+        <div class="focus-sub" style="text-align:center; margin-top:10px; margin-bottom:0;">${pick(ENCOURAGE_WAITING)}</div>
+        `}
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-num">${state.completedDays.length}</div>
+          <div class="stat-label">完了日数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">${14 - state.completedDays.length}</div>
+          <div class="stat-label">残り日数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">${calcStreak()}</div>
+          <div class="stat-label">連続日数</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="sessionOverlay"></div>
+  `;
+}
+
+function calcStreak(){
+  let streak = 0;
+  const maxDone = state.completedDays.length ? Math.max(...state.completedDays) : 0;
+  for(let d = maxDone; d>=1; d--){
+    if(state.completedDays.includes(d)) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function renderFinalScreen(){
+  const n = state.completedDays.length;
+  const title = n >= 12 ? "2週間、完走です" : n >= 7 ? "2週間、走り切りました" : "2週間、お疲れさまでした";
+  const sub = n >= 12
+    ? "ここからは週2回のペースで続けていきましょう。"
+    : "全部できなくても、体を動かした日は無駄になってません。ここからは週2回のペースで続けましょう。";
+  return `
+    <div class="complete-screen" style="min-height:100vh; display:flex;">
+      <div class="complete-icon">🏆</div>
+      <div class="complete-title">${title}</div>
+      <div class="complete-sub">${n}/14日 完了。<br>${sub}</div>
+      <div class="stats" style="width:100%; max-width:280px;">
+        <div class="stat-box">
+          <div class="stat-num">${n}</div>
+          <div class="stat-label">完了日数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">14</div>
+          <div class="stat-label">全日程</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function selectDuration(d){
+  state.selectedDuration = d;
+  saveState();
+  render();
+}
+
+function startSession(){
+  const dayIdx = state.currentDay - 1;
+  state.sessionQueue = buildSessionQueue(dayIdx, state.selectedDuration);
+  state.sessionIndex = 0;
+  state.sessionActive = true;
+  renderSession();
+}
+
+function phaseTag(phase){
+  if(phase === 'warmup') return '<div class="day-tag" style="background:rgba(255,184,119,0.15); color:#ffb877;">🔸 ウォームアップ</div>';
+  if(phase === 'cooldown') return '<div class="day-tag" style="background:rgba(76,175,125,0.15); color:#4caf7d;">🔹 クールダウン</div>';
+  return '';
+}
+
+function renderSession(){
+  const overlay = document.getElementById('sessionOverlay');
+  overlay.classList.add('active');
+  const item = state.sessionQueue[state.sessionIndex];
+  const total = state.sessionQueue.length;
+  const nextItem = state.sessionQueue[state.sessionIndex+1];
+
+  const isTimeType = item.type === 'time';
+
+  overlay.innerHTML = `
+    <div class="sess-header">
+      <div class="close-btn" onclick="exitSession()">✕</div>
+      <div class="sess-progress">${state.sessionIndex+1} / ${total}</div>
+      <div style="width:36px"></div>
+    </div>
+    <div class="sess-body">
+      ${phaseTag(item.phase)}
+      ${isTimeType ? `
+        <div class="sess-ring">
+          <svg width="220" height="220">
+            <circle cx="110" cy="110" r="100" stroke="#3a2f24" stroke-width="10" fill="none"/>
+            <circle id="ringProgress" cx="110" cy="110" r="100" stroke="#ff7a1a" stroke-width="10" fill="none"
+              stroke-dasharray="${2*Math.PI*100}" stroke-dashoffset="0" stroke-linecap="round"/>
+          </svg>
+          <div class="sess-timer" id="timerDisplay">${item.seconds}</div>
+        </div>
+      ` : `
+        <div class="sess-ring" style="background:rgba(255,122,26,0.1); border:2px solid var(--orange);">
+          <div class="sess-timer" style="font-size:38px;">${item.target.split('×')[0].trim()}</div>
+        </div>
+      `}
+      <div class="sess-name">${item.label}</div>
+      <div class="sess-note">${item.note}</div>
+      ${item.totalSets > 1 ? `<div class="sess-note">セット ${item.setNum} / ${item.totalSets}</div>` : ''}
+      ${nextItem ? `<div class="sess-next">次: <b>${nextItem.label}</b>${state.sessionIndex>0 && state.sessionIndex%3===0 ? ' ・ '+pick(ENCOURAGE_MID) : ''}</div>` : `<div class="sess-next">これで最後です 🎉</div>`}
+    </div>
+    <div class="sess-controls">
+      <button class="ctrl-btn" onclick="skipItem()">スキップ</button>
+      <button class="ctrl-btn primary" id="mainActionBtn" onclick="${isTimeType ? 'toggleTimer()' : 'completeItem()'}">
+        ${isTimeType ? '開始' : '完了'}
+      </button>
+    </div>
+  `;
+
+  if(isTimeType){
+    speak(item.label + '、' + item.seconds + '秒');
+  } else {
+    speak(item.label);
+  }
+}
+
+let timerState = { running:false, remaining:0, total:0 };
+
+function toggleTimer(){
+  const item = state.sessionQueue[state.sessionIndex];
+  const btn = document.getElementById('mainActionBtn');
+  if(!timerState.running){
+    if(timerState.remaining <= 0){
+      timerState.remaining = item.seconds;
+      timerState.total = item.seconds;
+    }
+    timerState.running = true;
+    btn.textContent = '一時停止';
+    runTimerTick();
+  } else {
+    timerState.running = false;
+    btn.textContent = '再開';
+    clearInterval(state.timerInterval);
+  }
+}
+
+function runTimerTick(){
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(()=>{
+    if(!timerState.running) return;
+    timerState.remaining--;
+    const display = document.getElementById('timerDisplay');
+    const ring = document.getElementById('ringProgress');
+    if(display) display.textContent = timerState.remaining;
+    if(ring){
+      const circumference = 2*Math.PI*100;
+      const progress = timerState.remaining / timerState.total;
+      ring.setAttribute('stroke-dashoffset', circumference * (1-progress));
+    }
+    if(timerState.remaining <= 3 && timerState.remaining > 0){
+      speak(String(timerState.remaining));
+    }
+    if(timerState.remaining <= 0){
+      clearInterval(state.timerInterval);
+      timerState.running = false;
+      speak('完了');
+      setTimeout(()=>completeItem(), 600);
+    }
+  }, 1000);
+}
+
+function skipItem(){
+  clearInterval(state.timerInterval);
+  timerState = {running:false, remaining:0, total:0};
+  advanceSession();
+}
+function completeItem(){
+  clearInterval(state.timerInterval);
+  timerState = {running:false, remaining:0, total:0};
+  advanceSession();
+}
+function advanceSession(){
+  state.sessionIndex++;
+  if(state.sessionIndex >= state.sessionQueue.length){
+    finishSession();
+  } else {
+    renderSession();
+  }
+}
+
+function finishSession(){
+  if(!state.completedDays.includes(state.currentDay)){
+    state.completedDays.push(state.currentDay);
+  }
+  saveState();
+  const overlay = document.getElementById('sessionOverlay');
+  const msg = pick(ENCOURAGE_COMPLETE);
+  overlay.innerHTML = `
+    <div class="complete-screen">
+      <div class="complete-icon">🔥</div>
+      <div class="complete-title">Day ${state.currentDay} 完了</div>
+      <div class="complete-sub">${state.completedDays.length}/14日 完了です。<br>${msg}</div>
+      <button class="start-btn" style="max-width:280px;" onclick="finishAndAdvance()">閉じる</button>
+    </div>
+  `;
+  speak(pick(['お疲れさまでした','よくやった','今日も完了です','続けてえらい']));
+}
+
+function finishAndAdvance(){
+  exitSession();
+}
+
+function exitSession(){
+  clearInterval(state.timerInterval);
+  timerState = {running:false, remaining:0, total:0};
+  const overlay = document.getElementById('sessionOverlay');
+  overlay.classList.remove('active');
+  render();
+}
+
+function speak(text){
+  try{
+    if('speechSynthesis' in window){
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      utter.rate = 1.0;
+      window.speechSynthesis.speak(utter);
+    }
+  }catch(e){}
+}
+
+loadState();
+</script>
+</body>
+</html>
