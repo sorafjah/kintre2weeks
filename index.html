@@ -25,6 +25,12 @@
     overflow-x:hidden;
     min-height:100vh;
   }
+  body.overlay-open{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    width:100%;
+  }
   .app{
     max-width:480px;
     margin:0 auto;
@@ -83,19 +89,20 @@
     transition:transform .15s ease;
   }
   .day-dot.done{
-    background:linear-gradient(160deg, var(--orange), var(--orange-deep));
-    color:#ffffff;
-    border-color:transparent;
+    background:#eaf6ef;
+    color:#2f8f5c;
+    border-color:#bfe3cd;
   }
   .day-dot.today{
     border-color:var(--orange);
-    color:var(--orange-pale);
-    box-shadow:0 0 0 3px rgba(255,138,61,0.20);
+    color:var(--orange);
+    box-shadow:0 0 0 2px rgba(255,138,61,0.12);
+    font-weight:800;
   }
   .day-dot.missed{
-    border-color:var(--line);
-    color:var(--text-dim);
-    opacity:0.55;
+    background:#f5f0e8;
+    color:#b0a08c;
+    border-color:#e8ddc9;
   }
   .day-dot.missed::after{
     content:"";
@@ -103,7 +110,7 @@
     bottom:3px; right:3px;
     width:5px; height:5px;
     border-radius:50%;
-    background:var(--text-dim);
+    background:#c9b89e;
   }
   .week-label{
     display:flex;
@@ -490,13 +497,31 @@ const COOLDOWN = {
   ],
 };
 
+// 15分・20分選択時に追加される種目（段階的に増える）
+const EXTRA = {
+  A: [
+    {name:"立ちヒップエクステンション", note:"椅子や壁に手を添え、片脚を後ろにゆっくり蹴り上げてお尻を締める", type:"time", seconds:20, sets:1, side:true},
+    {name:"リバースランジ", note:"片脚を後ろに引いて腰を落とす。膝は外向きを意識", type:"reps", reps:8, sets:1, target:"8回 × 1セット", side:true},
+  ],
+  B: [
+    {name:"サイドウォールプランク", note:"体の側面を壁に向けて斜めに保持", type:"time", seconds:20, sets:1, side:true},
+    {name:"ヒップヒンジ", note:"膝を軽く曲げたまま、お尻を後ろに引いて上体を前傾（デッドリフトの動き）", type:"reps", reps:10, sets:1, target:"10回 × 1セット"},
+  ],
+};
+
 
 const DAY_TYPES = ["A","B","A","B","A","B","A","B","A","B","A","B","A","B"]; // Day1-14
 
-function getDayMenu(dayIndex){ // 0-indexed
+function getDayMenu(dayIndex, duration){ // 0-indexed
   const week = dayIndex < 7 ? 1 : 2;
   const type = DAY_TYPES[dayIndex];
-  return PROGRAM[`${type}_week${week}`];
+  const base = PROGRAM[`${type}_week${week}`];
+  if(!duration || duration <= 10) return base;
+  const extras = EXTRA[type] || [];
+  let extraCount = 0;
+  if(duration === 15) extraCount = 1;
+  if(duration >= 20) extraCount = 2;
+  return base.concat(extras.slice(0, extraCount));
 }
 function getDayLabel(dayIndex){
   const type = DAY_TYPES[dayIndex];
@@ -639,17 +664,14 @@ async function saveState(){
 }
 
 function buildSessionQueue(dayIndex, duration){
-  const menu = getDayMenu(dayIndex);
+  const menu = getDayMenu(dayIndex, duration);
   const dayType = DAY_TYPES[dayIndex];
 
   function expand(exList, forceSingleSet){
     let out = [];
     exList.forEach(ex=>{
       let sets = forceSingleSet ? 1 : (ex.sets || 1);
-      if(!forceSingleSet){
-        if(duration >= 15) sets += 1;
-        if(duration === 5) sets = 1;
-      }
+      if(!forceSingleSet && duration === 5) sets = 1;
       for(let s=0; s<sets; s++){
         if(ex.side){
           out.push({...ex, label:`${ex.name}（右）`, setNum:s+1, totalSets:sets});
@@ -716,7 +738,7 @@ function render(){
     return;
   }
 
-  const menu = getDayMenu(dayIdx);
+  const menu = getDayMenu(dayIdx, state.selectedDuration);
   const dayLabel = getDayLabel(dayIdx);
   const weekNum = dayIdx < 7 ? 1 : 2;
   const isDoneToday = state.completedDays.includes(state.currentDay);
@@ -854,6 +876,7 @@ function startSession(){
   state.sessionQueue = buildSessionQueue(dayIdx, state.selectedDuration);
   state.sessionIndex = 0;
   state.sessionActive = true;
+  document.body.classList.add('overlay-open');
   renderSession();
 }
 
@@ -926,6 +949,7 @@ let timerState = { running:false, remaining:0, total:0 };
 function toggleTimer(){
   const item = state.sessionQueue[state.sessionIndex];
   const btn = document.getElementById('mainActionBtn');
+  ensureAudioContext();
   if(!timerState.running){
     if(timerState.remaining <= 0){
       timerState.remaining = item.seconds;
@@ -972,6 +996,7 @@ let repsTimerState = { running:false, remaining:0, total:0, tickSecond:0 };
 function toggleRepsTimer(){
   const item = state.sessionQueue[state.sessionIndex];
   const btn = document.getElementById('mainActionBtn');
+  ensureAudioContext();
   if(!repsTimerState.running){
     if(repsTimerState.remaining <= 0){
       repsTimerState.remaining = item.reps;
@@ -1063,6 +1088,7 @@ function exitSession(){
   timerState = {running:false, remaining:0, total:0};
   const overlay = document.getElementById('sessionOverlay');
   overlay.classList.remove('active');
+  document.body.classList.remove('overlay-open');
   render();
 }
 
@@ -1078,11 +1104,20 @@ function speak(text){
 }
 
 let audioCtx = null;
-function playBeep(){
+function ensureAudioContext(){
   try{
     if(!audioCtx){
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume();
+    }
+  }catch(e){}
+}
+function playBeep(){
+  try{
+    ensureAudioContext();
+    if(!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
