@@ -76,7 +76,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:10px;
+    font-size:12px;
     font-weight:700;
     color:var(--text-dim);
     position:relative;
@@ -148,7 +148,7 @@
     margin-bottom:14px;
   }
   .focus-title{
-    font-size:22px;
+    font-size:14px;
     font-weight:800;
     line-height:1.35;
     margin-bottom:4px;
@@ -184,9 +184,9 @@
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0;
   }
-  .ex-name{ font-size:14px; font-weight:600; flex:1; }
-  .ex-meta{ font-size:12px; color:var(--orange-pale); font-weight:700; white-space:nowrap;}
-  .ex-note{ font-size:11px; color:var(--text-dim); display:block; margin-top:2px; }
+  .ex-name{ font-size:15px; font-weight:600; flex:1; }
+  .ex-meta{ font-size:14px; color:var(--orange-pale); font-weight:700; white-space:nowrap;}
+  .ex-note{ font-size:13px; color:var(--text); display:block; margin-top:2px; }
 
   /* duration selector */
   .duration-select{
@@ -444,14 +444,14 @@
 // Day type B: 体幹・下背部
 const PROGRAM = {
   A_week1: [
-    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", target:"12回 × 1セット"},
+    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", reps:12, sets:1, target:"12回 × 1セット"},
     {name:"片脚バランス（左右）", note:"壁や椅子に手を添えてOK", type:"time", seconds:20, sets:1, side:true},
-    {name:"カーフレイズ", note:"かかと上げ下げ", type:"reps", target:"15回 × 1セット"},
+    {name:"カーフレイズ", note:"かかと上げ下げ", type:"reps", reps:15, sets:1, target:"15回 × 1セット"},
   ],
   A_week2: [
-    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", target:"15回 × 2セット"},
+    {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", reps:15, sets:2, target:"15回 × 2セット"},
     {name:"片脚バランス（左右）", note:"慣れたら手を離してみる", type:"time", seconds:30, sets:2, side:true},
-    {name:"カーフレイズ", note:"かかと上げ下げ、ゆっくり", type:"reps", target:"20回 × 2セット"},
+    {name:"カーフレイズ", note:"かかと上げ下げ、ゆっくり", type:"reps", reps:20, sets:2, target:"20回 × 2セット"},
     {name:"サイドレッグレイズ（左右）", note:"お尻の横の筋肉", type:"time", seconds:20, sets:1, side:true},
   ],
   B_week1: [
@@ -510,6 +510,7 @@ let state = {
   completedDays: [],   // array of day numbers
   selectedDuration: 10,
   hideOnboarding: false,
+  onboardingSeen: false,
   sessionActive: false,
   sessionQueue: [],
   sessionIndex: 0,
@@ -549,7 +550,7 @@ function renderOnboarding(){
     <div class="onboard">
       <div class="onboard-eyebrow">はじめに</div>
       <div class="onboard-title">2週間、体の土台を作ります</div>
-      <div class="onboard-sub">足腰・体幹の維持を目的にした、毎日短時間の集中プログラムです。職場でも自宅でも、立ったまま完結します。</div>
+      <div class="onboard-sub">足腰・体幹を鍛える毎日短時間の集中プログラムです。職場でも自宅でも、立ったまま完結します。</div>
 
       <div class="onboard-points">
         <div class="onboard-point">
@@ -596,6 +597,7 @@ function renderOnboarding(){
 function closeOnboarding(){
   const checked = document.getElementById('hideOnboardCheck').checked;
   state.hideOnboarding = checked;
+  state.onboardingSeen = true;
   saveState();
   render();
 }
@@ -609,14 +611,14 @@ async function loadState(){
       state.completedDays = saved.completedDays || [];
       state.selectedDuration = saved.selectedDuration || 10;
       state.hideOnboarding = saved.hideOnboarding || false;
+      state.onboardingSeen = saved.onboardingSeen || false;
     }
   }catch(e){ /* no saved state yet */ }
-  const isFirstLaunch = !state.startDate;
   if(!state.startDate){
     state.startDate = todayDateStr();
     await saveState();
   }
-  if(isFirstLaunch && !state.hideOnboarding){
+  if(!state.onboardingSeen && !state.hideOnboarding){
     renderOnboarding();
   } else {
     render();
@@ -629,7 +631,8 @@ async function saveState(){
       startDate: state.startDate,
       completedDays: state.completedDays,
       selectedDuration: state.selectedDuration,
-      hideOnboarding: state.hideOnboarding
+      hideOnboarding: state.hideOnboarding,
+      onboardingSeen: state.onboardingSeen
     }));
   }catch(e){ console.error('save failed', e); }
 }
@@ -674,9 +677,8 @@ function buildSessionQueue(dayIndex, duration){
 const ENCOURAGE_START = [
   "今日も一つ、積み上げよう。",
   "焦らずいこう。今日の分だけ集中。",
-  "奥さんとの時間のための投資、今日も一回分。",
+  "未来の自分への投資、今日も一回分。",
   "続けてるだけで上位。今日もやろう。",
-  "サボり癖より、今日の一歩。",
 ];
 const ENCOURAGE_MID = [
   "いいペース。折り返し近い。",
@@ -749,14 +751,11 @@ function render(){
           return `<div class="day-dot ${done?'done':''} ${isToday?'today':''} ${isPastMissed?'missed':''}">${done?'✓':dayNum}</div>`;
         }).join('')}
       </div>
-      <div class="week-label"><span>Week 1</span><span>Week 2</span></div>
     </div>
 
     <main>
       <div class="today-card">
-        <div class="day-tag">${dayLabel === '脚・お尻・バランス' ? '🦵' : '🧘'} ${dayLabel}</div>
         <div class="focus-title">${dayLabel}</div>
-        <div class="focus-sub">Week${weekNum} · ${menu.length}種目 · 前後にウォームアップ/クールダウン付き（5分選択時は本編のみ）</div>
 
         <div class="exercise-list">
           ${menu.map((ex,i)=>`
@@ -863,7 +862,7 @@ function phaseTag(phase){
   return '';
 }
 
-function renderSession(){
+function renderSession(delaySpeech){
   const overlay = document.getElementById('sessionOverlay');
   overlay.classList.add('active');
   const item = state.sessionQueue[state.sessionIndex];
@@ -890,8 +889,13 @@ function renderSession(){
           <div class="sess-timer" id="timerDisplay">${item.seconds}</div>
         </div>
       ` : `
-        <div class="sess-ring" style="background:rgba(255,138,61,0.12); border:2px solid var(--orange);">
-          <div class="sess-timer" style="font-size:38px;">${item.target.split('×')[0].trim()}</div>
+        <div class="sess-ring">
+          <svg width="220" height="220">
+            <circle cx="110" cy="110" r="100" stroke="#ffe1c2" stroke-width="10" fill="none"/>
+            <circle id="ringProgress" cx="110" cy="110" r="100" stroke="#ff7a1a" stroke-width="10" fill="none"
+              stroke-dasharray="${2*Math.PI*100}" stroke-dashoffset="0" stroke-linecap="round"/>
+          </svg>
+          <div class="sess-timer" id="timerDisplay">${item.reps}</div>
         </div>
       `}
       <div class="sess-name">${item.label}</div>
@@ -901,16 +905,18 @@ function renderSession(){
     </div>
     <div class="sess-controls">
       <button class="ctrl-btn" onclick="skipItem()">スキップ</button>
-      <button class="ctrl-btn primary" id="mainActionBtn" onclick="${isTimeType ? 'toggleTimer()' : 'completeItem()'}">
-        ${isTimeType ? '開始' : '完了'}
+      <button class="ctrl-btn primary" id="mainActionBtn" onclick="${isTimeType ? 'toggleTimer()' : 'toggleRepsTimer()'}">
+        開始
       </button>
     </div>
   `;
 
   if(isTimeType){
-    speak(item.label + '、' + item.seconds + '秒');
+    const doSpeak = ()=>speak(item.label + '、' + item.seconds + '秒');
+    if(delaySpeech){ setTimeout(doSpeak, 2000); } else { doSpeak(); }
   } else {
-    speak(item.label);
+    const doSpeak = ()=>speak(item.label + '、' + item.reps + '回');
+    if(delaySpeech){ setTimeout(doSpeak, 2000); } else { doSpeak(); }
   }
 }
 
@@ -959,14 +965,65 @@ function runTimerTick(){
   }, 1000);
 }
 
+const REPS_INTERVAL_SECONDS = 5;
+let repsTimerState = { running:false, remaining:0, total:0, tickSecond:0 };
+
+function toggleRepsTimer(){
+  const item = state.sessionQueue[state.sessionIndex];
+  const btn = document.getElementById('mainActionBtn');
+  if(!repsTimerState.running){
+    if(repsTimerState.remaining <= 0){
+      repsTimerState.remaining = item.reps;
+      repsTimerState.total = item.reps;
+      repsTimerState.tickSecond = REPS_INTERVAL_SECONDS;
+    }
+    repsTimerState.running = true;
+    btn.textContent = '一時停止';
+    runRepsTimerTick();
+  } else {
+    repsTimerState.running = false;
+    btn.textContent = '再開';
+    clearInterval(state.timerInterval);
+  }
+}
+
+function runRepsTimerTick(){
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(()=>{
+    if(!repsTimerState.running) return;
+    repsTimerState.tickSecond--;
+    if(repsTimerState.tickSecond <= 0){
+      repsTimerState.remaining--;
+      repsTimerState.tickSecond = REPS_INTERVAL_SECONDS;
+      playBeep();
+      const display = document.getElementById('timerDisplay');
+      const ring = document.getElementById('ringProgress');
+      if(display) display.textContent = Math.max(repsTimerState.remaining, 0);
+      if(ring){
+        const circumference = 2*Math.PI*100;
+        const progress = repsTimerState.remaining / repsTimerState.total;
+        ring.setAttribute('stroke-dashoffset', circumference * (1-Math.max(progress,0)));
+      }
+      if(repsTimerState.remaining <= 0){
+        clearInterval(state.timerInterval);
+        repsTimerState.running = false;
+        speak('完了');
+        setTimeout(()=>completeItem(), 600);
+      }
+    }
+  }, 1000);
+}
+
 function skipItem(){
   clearInterval(state.timerInterval);
   timerState = {running:false, remaining:0, total:0};
+  repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
   advanceSession();
 }
 function completeItem(){
   clearInterval(state.timerInterval);
   timerState = {running:false, remaining:0, total:0};
+  repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
   advanceSession();
 }
 function advanceSession(){
@@ -974,7 +1031,7 @@ function advanceSession(){
   if(state.sessionIndex >= state.sessionQueue.length){
     finishSession();
   } else {
-    renderSession();
+    renderSession(true);
   }
 }
 
@@ -1016,6 +1073,26 @@ function speak(text){
       utter.rate = 1.0;
       window.speechSynthesis.speak(utter);
     }
+  }catch(e){}
+}
+
+let audioCtx = null;
+function playBeep(){
+  try{
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.2);
   }catch(e){}
 }
 
