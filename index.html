@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>2週間集中プログラム</title>
 <style>
   :root{
@@ -117,7 +117,7 @@
   /* ---- Today card ---- */
   main{
     flex:1;
-    padding:8px 20px 100px;
+    padding:8px 20px calc(100px + env(safe-area-inset-bottom, 0px));
   }
   .today-card{
     background:var(--bg-card);
@@ -317,6 +317,7 @@
     display:flex;
     gap:12px;
     padding:20px;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px) + 20px);
   }
   .ctrl-btn{
     flex:1;
@@ -360,7 +361,7 @@
     min-height:100vh;
     display:flex;
     flex-direction:column;
-    padding:32px 22px 24px;
+    padding:32px 22px calc(24px + env(safe-area-inset-bottom, 0px));
   }
   .onboard-eyebrow{
     font-size:12px;
@@ -445,14 +446,14 @@
 const PROGRAM = {
   A_week1: [
     {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", reps:12, sets:1, target:"12回 × 1セット"},
-    {name:"片脚バランス（左右）", note:"壁や椅子に手を添えてOK", type:"time", seconds:20, sets:1, side:true},
+    {name:"片脚バランス", note:"壁や椅子に手を添えてOK", type:"time", seconds:20, sets:1, side:true},
     {name:"カーフレイズ", note:"かかと上げ下げ", type:"reps", reps:15, sets:1, target:"15回 × 1セット"},
   ],
   A_week2: [
     {name:"ワイドスクワット", note:"膝は外向きを意識", type:"reps", reps:15, sets:2, target:"15回 × 2セット"},
-    {name:"片脚バランス（左右）", note:"慣れたら手を離してみる", type:"time", seconds:30, sets:2, side:true},
+    {name:"片脚バランス", note:"慣れたら手を離してみる", type:"time", seconds:30, sets:2, side:true},
     {name:"カーフレイズ", note:"かかと上げ下げ、ゆっくり", type:"reps", reps:20, sets:2, target:"20回 × 2セット"},
-    {name:"サイドレッグレイズ（左右）", note:"お尻の横の筋肉", type:"time", seconds:20, sets:1, side:true},
+    {name:"サイドレッグレイズ", note:"お尻の横の筋肉", type:"time", seconds:20, sets:1, side:true},
   ],
   B_week1: [
     {name:"スタンディング・ニーレイズタッチ", note:"片膝を上げて逆手でタッチ、体幹を意識", type:"time", seconds:20, sets:1, side:true},
@@ -469,7 +470,7 @@ const PROGRAM = {
 
 const WARMUP = {
   A: [
-    {name:"足首まわし（左右）", note:"その場で足首をゆっくり回す", type:"time", seconds:15, sets:1, side:true, phase:"warmup"},
+    {name:"足首まわし", note:"その場で足首をゆっくり回す", type:"time", seconds:15, sets:1, side:true, phase:"warmup"},
     {name:"その場足踏み", note:"軽く膝を上げながら", type:"time", seconds:20, sets:1, phase:"warmup"},
   ],
   B: [
@@ -480,11 +481,11 @@ const WARMUP = {
 
 const COOLDOWN = {
   A: [
-    {name:"ふくらはぎストレッチ（左右）", note:"壁に手をつき片脚を後ろに引いて伸ばす", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
-    {name:"お尻・股関節ストレッチ（左右）", note:"椅子に座り片足首を反対の膝に乗せて前傾", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+    {name:"ふくらはぎストレッチ", note:"壁に手をつき片脚を後ろに引いて伸ばす", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+    {name:"お尻・股関節ストレッチ", note:"椅子に座り片足首を反対の膝に乗せて前傾", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
   ],
   B: [
-    {name:"体側伸ばし（左右）", note:"片手を上げて横に倒す", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
+    {name:"体側伸ばし", note:"片手を上げて横に倒す", type:"time", seconds:20, sets:1, side:true, phase:"cooldown"},
     {name:"肩甲骨ストレッチ", note:"腕を胸の前でクロスして反対の手で引き寄せる", type:"time", seconds:20, sets:1, phase:"cooldown"},
   ],
 };
