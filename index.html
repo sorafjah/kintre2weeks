@@ -489,6 +489,8 @@ const COOLDOWN = {
 };
 
 
+const DAY_TYPES = ["A","B","A","B","A","B","A","B","A","B","A","B","A","B"]; // Day1-14
+
 function getDayMenu(dayIndex){ // 0-indexed
   const week = dayIndex < 7 ? 1 : 2;
   const type = DAY_TYPES[dayIndex];
