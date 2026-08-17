@@ -886,7 +886,11 @@ function phaseTag(phase){
   return '';
 }
 
-function renderSession(delaySpeech){
+const REST_SECONDS = 8;
+let isPaused = false;
+let restTimerState = { running:false, remaining:0, total:0 };
+
+function renderSession(delaySpeech, autoStart){
   const overlay = document.getElementById('sessionOverlay');
   overlay.classList.add('active');
   const item = state.sessionQueue[state.sessionIndex];
@@ -894,6 +898,10 @@ function renderSession(delaySpeech){
   const nextItem = state.sessionQueue[state.sessionIndex+1];
 
   const isTimeType = item.type === 'time';
+  timerState = {running:false, remaining:0, total:0};
+  repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
+  restTimerState = {running:false, remaining:0, total:0};
+  isPaused = false;
 
   overlay.innerHTML = `
     <div class="sess-header">
@@ -929,40 +937,42 @@ function renderSession(delaySpeech){
     </div>
     <div class="sess-controls">
       <button class="ctrl-btn" onclick="skipItem()">スキップ</button>
-      <button class="ctrl-btn primary" id="mainActionBtn" onclick="${isTimeType ? 'toggleTimer()' : 'toggleRepsTimer()'}">
-        開始
+      <button class="ctrl-btn primary" id="mainActionBtn" onclick="togglePause()">
+        一時停止
       </button>
     </div>
   `;
 
+  const startTimerNow = ()=>{
+    ensureAudioContext();
+    if(isTimeType){ startTimeTimer(item); } else { startRepsTimer(item); }
+  };
+
   if(isTimeType){
-    const doSpeak = ()=>speak(item.label + '、' + item.seconds + '秒');
+    const doSpeak = ()=>{ speak(item.label + '、' + item.seconds + '秒'); if(autoStart!==false) startTimerNow(); };
     if(delaySpeech){ setTimeout(doSpeak, 2000); } else { doSpeak(); }
   } else {
-    const doSpeak = ()=>speak(item.label + '、' + item.reps + '回');
+    const doSpeak = ()=>{ speak(item.label + '、' + item.reps + '回'); if(autoStart!==false) startTimerNow(); };
     if(delaySpeech){ setTimeout(doSpeak, 2000); } else { doSpeak(); }
   }
 }
 
+function togglePause(){
+  const btn = document.getElementById('mainActionBtn');
+  isPaused = !isPaused;
+  timerState.running = !isPaused && timerState.total > 0;
+  repsTimerState.running = !isPaused && repsTimerState.total > 0;
+  restTimerState.running = !isPaused && restTimerState.total > 0;
+  btn.textContent = isPaused ? '再開' : '一時停止';
+}
+
 let timerState = { running:false, remaining:0, total:0 };
 
-function toggleTimer(){
-  const item = state.sessionQueue[state.sessionIndex];
-  const btn = document.getElementById('mainActionBtn');
-  ensureAudioContext();
-  if(!timerState.running){
-    if(timerState.remaining <= 0){
-      timerState.remaining = item.seconds;
-      timerState.total = item.seconds;
-    }
-    timerState.running = true;
-    btn.textContent = '一時停止';
-    runTimerTick();
-  } else {
-    timerState.running = false;
-    btn.textContent = '再開';
-    clearInterval(state.timerInterval);
-  }
+function startTimeTimer(item){
+  timerState.remaining = item.seconds;
+  timerState.total = item.seconds;
+  timerState.running = true;
+  runTimerTick();
 }
 
 function runTimerTick(){
@@ -993,24 +1003,12 @@ function runTimerTick(){
 const REPS_INTERVAL_SECONDS = 5;
 let repsTimerState = { running:false, remaining:0, total:0, tickSecond:0 };
 
-function toggleRepsTimer(){
-  const item = state.sessionQueue[state.sessionIndex];
-  const btn = document.getElementById('mainActionBtn');
-  ensureAudioContext();
-  if(!repsTimerState.running){
-    if(repsTimerState.remaining <= 0){
-      repsTimerState.remaining = item.reps;
-      repsTimerState.total = item.reps;
-      repsTimerState.tickSecond = REPS_INTERVAL_SECONDS;
-    }
-    repsTimerState.running = true;
-    btn.textContent = '一時停止';
-    runRepsTimerTick();
-  } else {
-    repsTimerState.running = false;
-    btn.textContent = '再開';
-    clearInterval(state.timerInterval);
-  }
+function startRepsTimer(item){
+  repsTimerState.remaining = item.reps;
+  repsTimerState.total = item.reps;
+  repsTimerState.tickSecond = REPS_INTERVAL_SECONDS;
+  repsTimerState.running = true;
+  runRepsTimerTick();
 }
 
 function runRepsTimerTick(){
@@ -1044,21 +1042,92 @@ function skipItem(){
   clearInterval(state.timerInterval);
   timerState = {running:false, remaining:0, total:0};
   repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
-  advanceSession();
+  advanceSession(true); // スキップ時は休憩を挟まず次へ
 }
 function completeItem(){
   clearInterval(state.timerInterval);
   timerState = {running:false, remaining:0, total:0};
   repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
-  advanceSession();
+  advanceSession(false);
 }
-function advanceSession(){
+function advanceSession(skipRest){
   state.sessionIndex++;
   if(state.sessionIndex >= state.sessionQueue.length){
     finishSession();
-  } else {
+  } else if(skipRest){
     renderSession(true);
+  } else {
+    renderRest();
   }
+}
+
+function renderRest(){
+  const overlay = document.getElementById('sessionOverlay');
+  const nextItem = state.sessionQueue[state.sessionIndex];
+  isPaused = false;
+  timerState = {running:false, remaining:0, total:0};
+  repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
+  restTimerState.remaining = REST_SECONDS;
+  restTimerState.total = REST_SECONDS;
+  restTimerState.running = true;
+
+  overlay.innerHTML = `
+    <div class="sess-header">
+      <div class="close-btn" onclick="exitSession()">✕</div>
+      <div class="sess-progress">休憩</div>
+      <div style="width:36px"></div>
+    </div>
+    <div class="sess-body">
+      <div class="day-tag" style="background:#eaf6ef; color:#2f8f5c;">😮‍💨 休憩</div>
+      <div class="sess-ring">
+        <svg width="220" height="220">
+          <circle cx="110" cy="110" r="100" stroke="#ffe1c2" stroke-width="10" fill="none"/>
+          <circle id="ringProgress" cx="110" cy="110" r="100" stroke="#4caf7d" stroke-width="10" fill="none"
+            stroke-dasharray="${2*Math.PI*100}" stroke-dashoffset="0" stroke-linecap="round"/>
+        </svg>
+        <div class="sess-timer" id="timerDisplay">${REST_SECONDS}</div>
+      </div>
+      <div class="sess-name">ひと呼吸</div>
+      <div class="sess-note">次: ${nextItem.label}</div>
+    </div>
+    <div class="sess-controls">
+      <button class="ctrl-btn" onclick="skipRest()">スキップ</button>
+      <button class="ctrl-btn primary" id="mainActionBtn" onclick="togglePause()">
+        一時停止
+      </button>
+    </div>
+  `;
+  runRestTick();
+}
+
+function runRestTick(){
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(()=>{
+    if(!restTimerState.running) return;
+    restTimerState.remaining--;
+    const display = document.getElementById('timerDisplay');
+    const ring = document.getElementById('ringProgress');
+    if(display) display.textContent = restTimerState.remaining;
+    if(ring){
+      const circumference = 2*Math.PI*100;
+      const progress = restTimerState.remaining / restTimerState.total;
+      ring.setAttribute('stroke-dashoffset', circumference * (1-progress));
+    }
+    if(restTimerState.remaining <= 3 && restTimerState.remaining > 0){
+      speak(String(restTimerState.remaining));
+    }
+    if(restTimerState.remaining <= 0){
+      clearInterval(state.timerInterval);
+      restTimerState.running = false;
+      renderSession(false);
+    }
+  }, 1000);
+}
+
+function skipRest(){
+  clearInterval(state.timerInterval);
+  restTimerState.running = false;
+  renderSession(false);
 }
 
 function finishSession(){
@@ -1086,6 +1155,8 @@ function finishAndAdvance(){
 function exitSession(){
   clearInterval(state.timerInterval);
   timerState = {running:false, remaining:0, total:0};
+  repsTimerState = {running:false, remaining:0, total:0, tickSecond:0};
+  restTimerState = {running:false, remaining:0, total:0};
   const overlay = document.getElementById('sessionOverlay');
   overlay.classList.remove('active');
   document.body.classList.remove('overlay-open');
