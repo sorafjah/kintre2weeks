@@ -886,7 +886,7 @@ function phaseTag(phase){
   return '';
 }
 
-const REST_SECONDS = 8;
+const REST_SECONDS = 10;
 let isPaused = false;
 let restTimerState = { running:false, remaining:0, total:0 };
 
@@ -1070,6 +1070,7 @@ function renderRest(){
   restTimerState.remaining = REST_SECONDS;
   restTimerState.total = REST_SECONDS;
   restTimerState.running = true;
+  restNextAnnounced = false;
 
   overlay.innerHTML = `
     <div class="sess-header">
@@ -1100,6 +1101,8 @@ function renderRest(){
   runRestTick();
 }
 
+let restNextAnnounced = false;
+
 function runRestTick(){
   clearInterval(state.timerInterval);
   state.timerInterval = setInterval(()=>{
@@ -1113,7 +1116,11 @@ function runRestTick(){
       const progress = restTimerState.remaining / restTimerState.total;
       ring.setAttribute('stroke-dashoffset', circumference * (1-progress));
     }
-    if(restTimerState.remaining <= 3 && restTimerState.remaining > 0){
+    if(!restNextAnnounced && restTimerState.remaining <= 7 && restTimerState.remaining > 0){
+      restNextAnnounced = true;
+      const nextItem = state.sessionQueue[state.sessionIndex];
+      if(nextItem) speak('次は' + nextItem.label);
+    } else if(restTimerState.remaining <= 3 && restTimerState.remaining > 0){
       speak(String(restTimerState.remaining));
     }
     if(restTimerState.remaining <= 0){
