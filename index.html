@@ -628,9 +628,36 @@ function closeOnboarding(){
   render();
 }
 
+// ストレージ層: localStorageを主に使用（GitHub Pages等の自己ホスト環境で確実に動くように）。
+// window.storage（Claude.aiのアーティファクト環境）が使える場合はそちらも試みるが、
+// 失敗してもlocalStorageで完結するようにする。
+const LS_KEY = 'twoWeekProgram_progress';
+async function storageGet(key){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return { value: raw };
+  }catch(e){}
+  try{
+    if(window.storage && window.storage.get){
+      return await window.storage.get(key);
+    }
+  }catch(e){}
+  return null;
+}
+async function storageSet(key, value){
+  try{
+    localStorage.setItem(LS_KEY, value);
+  }catch(e){}
+  try{
+    if(window.storage && window.storage.set){
+      await window.storage.set(key, value);
+    }
+  }catch(e){}
+}
+
 async function loadState(){
   try{
-    const res = await window.storage.get('progress');
+    const res = await storageGet('progress');
     if(res && res.value){
       const saved = JSON.parse(res.value);
       state.startDate = saved.startDate || null;
@@ -653,7 +680,7 @@ async function loadState(){
 
 async function saveState(){
   try{
-    await window.storage.set('progress', JSON.stringify({
+    await storageSet('progress', JSON.stringify({
       startDate: state.startDate,
       completedDays: state.completedDays,
       selectedDuration: state.selectedDuration,
